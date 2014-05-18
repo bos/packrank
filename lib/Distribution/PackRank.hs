@@ -26,11 +26,23 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
 
+-- | This matrix maps packages to the packages they depend on.  The
+-- outer vector is indexed by a package's ID, and the inner contains
+-- the ID of every package it depends on.
 newtype Depending = Depending (V.Vector (U.Vector Int))
+
+-- | This matrix maps packages to the packages that depend on them.
+-- The outer vector is indexed by a package's ID, and the inner contains
+-- the ID of every package that depends on it.
 newtype Depended = Depended (V.Vector (U.Vector Int))
 
-dependsOn :: Fold PackInfo String
-dependsOn = piDesc . folded . diDeps . folded . depName . packageName
+-- | Indices of \"silent\" package IDs (those that are depended on by
+-- other packages, but have no dependencies themselves).
+type Silent = U.Vector Int
+
+-- | Map from package ID to the reciprocal of the number of packages
+-- it depends on.
+type DepFactors = U.Vector Double
 
 data Index = Index {
     forwardIdx :: Map String Int
@@ -52,16 +64,16 @@ depending Index{..} = Depending . V.fromList . IntMap.elems .
       let deps = pi ^.. dependsOn . to (flip Map.lookup forwardIdx)
       in IntMap.insert (forwardIdx Map.! name) (G.fromList (catMaybes deps)) im
 
-type Silent = U.Vector Int
-type DepFactors = U.Vector Double
+dependsOn :: Fold PackInfo String
+dependsOn = piDesc . folded . diDeps . folded . depName . packageName
 
 transpose :: Depending -> (Depended, DepFactors, Silent)
-transpose (Depending dep) = (Depended depended, depFactors, silent)
+transpose (Depending dep) = (Depended deps, factors, silent)
   where
-    depFactors = G.convert . G.map (recip . fromIntegral . G.length) $ dep
-    silent = G.convert . G.map fst . G.filter (G.null . snd) . G.imap (,) $ dep
-    depended = G.generate (G.length dep) $ \i ->
-               maybe G.empty G.fromList $ Map.lookup i incoming
+    factors = G.convert . G.map (recip . fromIntegral . G.length) $ dep
+    silent  = G.convert . G.map fst . G.filter (G.null . snd) . G.imap (,) $ dep
+    deps = G.generate (G.length dep) $ \i ->
+           maybe G.empty G.fromList $ Map.lookup i incoming
       where incoming = G.ifoldl' step Map.empty dep
             step m0 i = G.foldl' (\m j -> Map.insertWith (++) j [i] m) m0
 
@@ -70,8 +82,7 @@ data PackRank = PackRank {
     , prVector :: !(U.Vector Double)
     }
 
-packRanks :: Depended -> DepFactors -> Silent -> Double
-     -> [PackRank]
+packRanks :: Depended -> DepFactors -> Silent -> Double -> [PackRank]
 packRanks (Depended depended) factors silent alpha =
     iterate iter $ PackRank 0 (G.replicate count (1/n))
   where
