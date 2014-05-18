@@ -1,0 +1,44 @@
+name:                packrank
+version:             0.1.0.0
+synopsis:            Package ranking
+-- description:
+homepage:            https://bitbucket.org/bos/packrank
+license:             BSD3
+license-file:        LICENSE
+author:              Bryan O'Sullivan
+maintainer:          bos@serpentine.com
+-- copyright:
+category:            Development
+build-type:          Simple
+-- extra-source-files:
+cabal-version:       >=1.10
+
+library
+  default-language: Haskell2010
+  hs-source-dirs: lib
+  ghc-options: -O2 -Wall -fwarn-tabs
+  exposed-modules:
+    Distribution.PackRank
+    Distribution.PackDeps.Lens
+  other-modules:
+    Distribution.PackDeps.Lens.Machinery
+  build-depends:
+    Cabal,
+    base >=4.3 && <5,
+    containers,
+    lens >= 0.4.0.2,
+    packdeps >= 0.4.0.2,
+    template-haskell,
+    vector
+
+executable packrank
+  default-language: Haskell2010
+  ghc-options: -O2 -Wall -fwarn-tabs
+  hs-source-dirs: exe
+  main-is: PackRank.hs
+  build-depends:
+    base >=4.3 && <5,
+    containers,
+    packrank,
+    vector,
+    vector-algorithms >= 0.5
