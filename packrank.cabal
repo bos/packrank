@@ -25,11 +25,13 @@ library
   build-depends:
     Cabal,
     base >=4.3 && <5,
+    binary,
     containers,
     lens >= 0.4.0.2,
     packdeps >= 0.4.0.2,
     template-haskell,
-    vector
+    vector,
+    vector-binary-instances
 
 executable packrank
   default-language: Haskell2010
@@ -38,7 +40,10 @@ executable packrank
   main-is: PackRank.hs
   build-depends:
     base >=4.3 && <5,
+    binary,
     containers,
+    directory,
+    filepath,
     packrank,
     vector,
     vector-algorithms >= 0.5

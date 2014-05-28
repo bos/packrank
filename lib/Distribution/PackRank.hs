@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns, RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns, DeriveGeneric, GeneralizedNewtypeDeriving,
+    RecordWildCards, ScopedTypeVariables #-}
 
 module Distribution.PackRank
     (
@@ -14,14 +15,17 @@ module Distribution.PackRank
     ) where
 
 import Control.Lens hiding (Index)
+import Data.Binary
 import Data.Bits ((.&.))
 import Data.Function (on)
 import Data.Map (Map)
 import Data.Maybe (catMaybes)
+import Data.Vector.Binary ()
 import Distribution.PackDeps.Lens
+import GHC.Generics (Generic)
 import Prelude hiding (pi)
 import qualified Data.IntMap as IntMap
-import qualified Data.Map.Strict as Map
+import qualified Data.Map as Map
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as G
 import qualified Data.Vector.Unboxed as U
@@ -30,11 +34,13 @@ import qualified Data.Vector.Unboxed as U
 -- outer vector is indexed by a package's ID, and the inner contains
 -- the ID of every package it depends on.
 newtype Depending = Depending (V.Vector (U.Vector Int))
+                  deriving (Eq, Read, Show, Binary)
 
 -- | This matrix maps packages to the packages that depend on them.
 -- The outer vector is indexed by a package's ID, and the inner contains
 -- the ID of every package that depends on it.
 newtype Depended = Depended (V.Vector (U.Vector Int))
+                 deriving (Eq, Read, Show, Binary)
 
 -- | Indices of \"silent\" package IDs (those that are depended on by
 -- other packages, but have no dependencies themselves).
@@ -47,7 +53,16 @@ type DepFactors = U.Vector Double
 data Index = Index {
     forwardIdx :: Map String Int
   , reverseIdx :: V.Vector String
-  }
+  } deriving (Eq, Read, Show, Generic)
+
+instance Binary Index
+
+data PackRank = PackRank {
+      prIter   :: {-# UNPACK #-} !Int
+    , prVector :: !(U.Vector Double)
+    } deriving (Eq, Read, Show, Generic)
+
+instance Binary PackRank
 
 makeIndex :: Newest -> Index
 makeIndex = toIndex . ifoldl' go (0, Map.empty, [])
@@ -77,11 +92,6 @@ transpose (Depending dep) = (Depended deps, factors, silent)
       where incoming = G.ifoldl' step Map.empty dep
             step m0 i = G.foldl' (\m j -> Map.insertWith (++) j [i] m) m0
 
-data PackRank = PackRank {
-      prIter   :: {-# UNPACK #-} !Int
-    , prVector :: !(U.Vector Double)
-    }
-
 packRanks :: Depended -> DepFactors -> Silent -> Double -> [PackRank]
 packRanks (Depended depended) factors silent alpha =
     iterate iter $ PackRank 0 (G.replicate count (1/n))
@@ -96,7 +106,7 @@ packRanks (Depended depended) factors silent alpha =
         i = (1 - alpha) * G.sum old / n
         a | G.null silent = 0
           | otherwise     = alpha * G.sum (G.backpermute old silent) / n
-        old | k .&. 16 == 15 = G.map (/G.sum old0) old0
+        old | k .&. 15 == 15 = G.map (/G.sum old0) old0
             | otherwise      = old0
     count = G.length factors
     n = fromIntegral count
