@@ -44,6 +44,7 @@ executable packrank
     containers,
     directory,
     filepath,
+    packdeps,
     packrank,
     vector,
     vector-algorithms >= 0.5
