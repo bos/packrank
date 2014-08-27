@@ -1,22 +1,24 @@
 name:                packrank
 version:             0.1.0.0
 synopsis:            Package ranking
--- description:
-homepage:            https://bitbucket.org/bos/packrank
+description:         A library and program for ranking packages by how
+                     widely they are used.
+homepage:            https://github.com/bos/packrank
 license:             BSD3
 license-file:        LICENSE
 author:              Bryan O'Sullivan
 maintainer:          bos@serpentine.com
--- copyright:
+copyright:           2014 Bryan O'Sullivan
 category:            Development
 build-type:          Simple
--- extra-source-files:
 cabal-version:       >=1.10
+extra-source-files:
+  README.md
 
 library
   default-language: Haskell2010
-  hs-source-dirs: lib
-  ghc-options: -O2 -Wall -fwarn-tabs
+  hs-source-dirs:   lib
+  ghc-options:      -O2 -Wall -fwarn-tabs
   exposed-modules:
     Distribution.PackRank
     Distribution.PackDeps.Lens
@@ -35,9 +37,9 @@ library
 
 executable packrank
   default-language: Haskell2010
-  ghc-options: -O2 -Wall -fwarn-tabs
-  hs-source-dirs: exe
-  main-is: PackRank.hs
+  ghc-options:      -O2 -Wall -fwarn-tabs
+  hs-source-dirs:   exe
+  main-is:          PackRank.hs
   build-depends:
     base >=4.3 && <5,
     binary,
@@ -48,3 +50,11 @@ executable packrank
     packrank,
     vector,
     vector-algorithms >= 0.5
+
+source-repository head
+  type:     git
+  location: https://github.com/bos/packrank
+
+source-repository head
+  type:     mercurial
+  location: https://bitbucket.org/bos/packrank
