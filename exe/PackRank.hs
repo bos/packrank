@@ -7,9 +7,10 @@ import Control.Exception (try)
 import Control.Monad (forM_)
 import Data.Binary (decodeFileOrFail, encodeFile)
 import Data.Char (isSpace)
-import Data.List (stripPrefix)
+import Data.List (group, sort, stripPrefix)
 import Data.Maybe (catMaybes)
-import Distribution.PackDeps
+import Distribution.PackDeps (Reverses, getReverses)
+import Distribution.PackDeps.Lens (Newest, loadNewest)
 import Distribution.PackRank
 import System.Directory (getAppUserDataDirectory, getModificationTime)
 import System.Environment (getArgs)
@@ -29,8 +30,12 @@ main = do
     _  -> do
       n <- maybe (status "loading newest" >> loadNewest) return mn
       let r = getReverses n
-      forM_ args $ \a ->
-        print (transitiveReverses a r)
+      forM_ args $ \a -> do
+        let xs = sort [(prVector s U.! (forwardIdx idx Map.! tr), tr) |
+                       tr <- transitiveReverses a r]
+            k = 10000 / fst (last xs)
+        forM_ (map head . group $ xs) $ \(r,n) ->
+          putStrLn . unwords $ [n,show (round (r*k)::Int)]
 
 transitiveReverses :: String -> Reverses -> [String]
 transitiveReverses name = maybe [] (map fst . snd) . Map.lookup name
