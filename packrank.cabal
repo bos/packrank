@@ -29,7 +29,7 @@ library
     base >=4.3 && <5,
     binary,
     containers,
-    lens >= 0.4.4,
+    lens >= 0.4.5,
     packdeps >= 0.4.0.2,
     template-haskell,
     vector,
