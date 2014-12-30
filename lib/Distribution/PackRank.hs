@@ -1,5 +1,5 @@
-{-# LANGUAGE BangPatterns, DeriveGeneric, GeneralizedNewtypeDeriving,
-    RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns, DeriveGeneric, FlexibleContexts,
+    GeneralizedNewtypeDeriving, RecordWildCards, ScopedTypeVariables #-}
 
 module Distribution.PackRank
     (
